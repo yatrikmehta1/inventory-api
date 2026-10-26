@@ -32,10 +32,6 @@
 - Stock quantities are whole units and cannot be negative.
 - `stock_in` and `stock_out` represent physical movement; reservation operations only change reserved quantity.
 - `net_movement = stock_in - stock_out`; reservations are excluded.
-- The warehouse with the highest stock is ranked by physical quantity; ties can return multiple rows in the current query and should be resolved deterministically if the business wants exactly one.
-- Product list and low-stock endpoints are paginated.
-- Product category filters include descendants.
-- Movement history is treated as append-only by application convention; database permissions/triggers can further enforce immutability in production.
 
 ## Setup
 1. Install PHP 8.1+, Composer, MySQL 8+, Redis, and a Redis PHP extension/client.
