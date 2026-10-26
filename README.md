@@ -41,7 +41,7 @@
 1. Install PHP 8.1+, Composer, MySQL 8+, Redis, and a Redis PHP extension/client.
 2. Create a Laravel 11 project: `composer create-project laravel/laravel inventory-api "^11.0"`.
 3. Create database `inventory_api`, copy `.env.example` to `.env`, configure credentials, then run `php artisan key:generate`.
-4. Ensure `bootstrap/app.php` registers API routes. For Laravel 11, use `php artisan install:api` if the API route file was not already configured, then keep the routes in `routes/api.php`.
+4. Configure API routes in bootstrap/app.php. If needed, run php artisan install:api and define endpoints in routes/api.php.
 5. Install Redis on Windows: Download the PHP 8.2-compatible php_redis.dll from PECL Redis(https://pecl.php.net/package/redis/6.3.0/windows) 6.3.0, copy it into PHP's ext folder, and add extension=php_redis.dll to php.ini. Install Memurai for Windows and start/stop its service using net start Memurai / net stop Memurai in an Administrator terminal.
 5. Set `CACHE_STORE=redis`; ensure Redis is running and the configured client is installed.
 6. Run `php artisan migrate`
