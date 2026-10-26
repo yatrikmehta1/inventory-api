@@ -7,6 +7,16 @@ use Illuminate\Validation\Rule;
 
 class ProductIndexRequest extends FormRequest
 {
+    protected function prepareForValidation(): void
+    {
+        if (is_string($this->input('available'))) {
+            $value = strtolower($this->input('available'));
+            if (in_array($value, ['true', 'false'], true)) {
+                $this->merge(['available' => $value === 'true']);
+            }
+        }
+    }
+
     /**
      * Determine if the user is authorized to make this request.
      */

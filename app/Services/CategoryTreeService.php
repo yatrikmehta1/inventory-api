@@ -13,7 +13,8 @@ class CategoryTreeService
         if (Cache::has($key)) return Cache::get($key);
         $tree = (function () {
             $rows = Category::query()->select(['id', 'name', 'slug', 'parent_id', 'is_active'])
-                ->orderBy('name')->get();
+                                     ->orderBy('name') 
+                                     ->get();
             $all = $rows->keyBy('id');
             $active = $rows->where('is_active', true)->keyBy('id');
             $nodes = [];

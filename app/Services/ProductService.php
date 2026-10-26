@@ -16,6 +16,7 @@ class ProductService
         $key = 'inventory:products:v'.$version.':'.hash('sha256', json_encode($filters));
         if (Cache::has($key)) return Cache::get($key);
         $result = (function () use ($filters) {
+            $onlyAvailable = filter_var($filters['available'] ?? false, FILTER_VALIDATE_BOOLEAN);
             $query = Product::query()->active()->with('category:id,name')
                 ->addSelect(['available_stock_total' => DB::table('stocks')
                     ->selectRaw('COALESCE(SUM(quantity - reserved_quantity), 0)')
@@ -27,10 +28,15 @@ class ProductService
             if (!empty($filters['warehouse_id'])) {
                 $query->whereHas('stocks', function ($q) use ($filters) {
                     $q->where('warehouse_id', $filters['warehouse_id']);
-                    if (!empty($filters['available'])) $q->whereRaw('(quantity - reserved_quantity) > 0');
                 });
-            } elseif (!empty($filters['available'])) {
-                $query->whereHas('stocks', fn ($q) => $q->whereRaw('(quantity - reserved_quantity) > 0'));
+            }
+            if ($onlyAvailable) {
+                $query->whereHas('stocks', function ($q) use ($filters) {
+                    if (!empty($filters['warehouse_id'])) {
+                        $q->where('warehouse_id', $filters['warehouse_id']);
+                    }
+                    $q->whereRaw('(quantity - reserved_quantity) > 0');
+                });
             }
             $query->priceRange(isset($filters['min_price']) ? (float)$filters['min_price'] : null,
                 isset($filters['max_price']) ? (float)$filters['max_price'] : null);

@@ -14,8 +14,8 @@ Route::get('/user', function (Request $request) {
 })->middleware('auth:sanctum');
 
 Route::get('/categories/tree', [CategoryController::class, 'tree']);
-Route::get('/products', [ProductController::class, 'index']);
+Route::post('/products', [ProductController::class, 'index']);
 Route::post('/stock/adjust', [StockAdjustmentController::class, 'store']);
 Route::get('/inventory/summary', [InventoryController::class, 'summary']);
 Route::get('/inventory/low-stock', [InventoryController::class, 'lowStock']);
-Route::get('/products/{product}/movements', [ProductMovementController::class, 'index']);
+Route::post('/products/{product}/movements', [ProductMovementController::class, 'index']);

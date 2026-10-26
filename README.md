@@ -1,3 +1,56 @@
+# Smart Inventory Management API
+
+## Endpoints
+| Method | Endpoint | Purpose |
+|---|---|---|
+| GET | `/api/categories/tree` | Nested active category tree |
+| POST | `/api/products` | Filtered, paginated product listing |
+| POST | `/api/stock/adjust` | Transactional stock adjustment |
+| GET | `/api/inventory/summary` | Cached stock totals by product |
+| GET | `/api/inventory/low-stock?threshold=10` | Paginated low-stock results |
+| POST | `/api/products/{id}/movements` | Movement history and database summary |
+
+## Cache keys
+- `inventory:categories:tree:v1` — 30 minutes; forgotten on category changes.
+- `inventory:products:v{version}:{filter-hash}` — 2 minutes; product version increments on relevant writes.
+- `inventory:summary:v1` — 5 minutes; forgotten after stock changes.
+- `inventory:low-stock:v{version}:threshold:{n}` — 2 minutes; low-stock version increments after stock changes.
+
+The summary can be warmed with `php artisan inventory:cache-warm` after the command is added or by requesting the summary endpoint once. Empty/error responses should not be cached. Cache invalidation is done only after a stock transaction commits.
+
+## Indexing decisions
+- `categories.slug` unique: avoid duplicate slugs.
+- `categories.parent_id`: traverse parent/child relationships.
+- `products.sku` unique: prevent duplicate SKU and speed exact lookup.
+- `products(category_id, is_active)`: common category/active filters.
+- `products.base_price`: price range filter.
+- `stock(product_id, warehouse_id)` unique: enforce one balance row per pair and speed exact lookup.
+- `stock(warehouse_id, quantity, reserved_quantity)`: warehouse availability reports.
+- `stock_movements(product_id, moved_at)`: product history and date filters.
+- `stock_movements(warehouse_id, moved_at)`: warehouse history.
+- `stock_movements(movement_type, moved_at)`: movement-type aggregations.
+
+## Assumptions
+- Stock quantities are whole units and cannot be negative.
+- `stock_in` and `stock_out` represent physical movement; reservation operations only change reserved quantity.
+- `net_movement = stock_in - stock_out`; reservations are excluded.
+- The warehouse with the highest stock is ranked by physical quantity; ties can return multiple rows in the current query and should be resolved deterministically if the business wants exactly one.
+- Product list and low-stock endpoints are paginated.
+- Product category filters include descendants.
+- Movement history is treated as append-only by application convention; database permissions/triggers can further enforce immutability in production.
+
+## Setup
+1. Install PHP 8.1+, Composer, MySQL 8+, Redis, and a Redis PHP extension/client.
+2. Create a Laravel 11 project: `composer create-project laravel/laravel inventory-api "^11.0"`.
+3. Copy the provided `app/`, `database/`, `routes/api.php`, and `.env.example` into the Laravel project.
+4. Create database `inventory_api`, copy `.env.example` to `.env`, configure credentials, then run `php artisan key:generate`.
+5. Ensure `bootstrap/app.php` registers API routes. For Laravel 11, use `php artisan install:api` if the API route file was not already configured, then keep the routes in `routes/api.php`.
+6. Set `CACHE_STORE=redis`; ensure Redis is running and the configured client is installed. If using Predis instead of phpredis, install `predis/predis` and set `REDIS_CLIENT=predis`.
+7. Run `php artisan migrate --seed`.
+8. Run `php artisan serve` and test endpoints at `http://127.0.0.1:8000/api/...`.
+9. Run `php artisan test` after adding/using the tests in the project.
+
+
 <p align="center"><a href="https://laravel.com" target="_blank"><img src="https://raw.githubusercontent.com/laravel/art/master/logo-lockup/5%20SVG/2%20CMYK/1%20Full%20Color/laravel-logolockup-cmyk-red.svg" width="400" alt="Laravel Logo"></a></p>
 
 <p align="center">
